@@ -104,7 +104,7 @@ class DB
     public static function updateStudent($table, array $data)
     {
         $sth = self::$_instance->prepare(
-            "UPDATE `{$table}` SET name=:name, surname=:surname, sex=:sex, groupName=:group, email=:email, scoreEge=:scoreEge, dateBirth=:dateBirth, citizenship=:citizenship WHERE id=:id"
+            "UPDATE `{$table}` SET name=:name, surname=:surname, sex=:sex, groupName=:group, email=:email, scoreEge=:scoreEge, dateBirth=:dateBirth, citizenship=:citizenship, accessToken=:token WHERE id=:id"
         );
         $stmt = $sth->execute($data);
         return true;
@@ -133,6 +133,19 @@ class DB
         } catch (Exception $e) {
             $_SESSION['ERROR'] = $e->getMessage();
             return [];
+        }
+    }
+
+    public static function findByTwoColumnsAsUnique(string $table, string $firstColumn, string $secondColumn, array $data)
+    {
+        try {
+            $sth = self::$_instance->prepare("SELECT * FROM {$table} WHERE {$firstColumn} = :first and {$secondColumn} = :second");
+            $sth->bindValue(":first", $data[0]);
+            $sth->bindValue(":second", $data[1]);
+            $sth->execute();
+            return $sth->fetch();
+        } catch (Exception $e) {
+            throw new Exception("Что-то произошло не так");
         }
     }
 }

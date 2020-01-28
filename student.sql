@@ -1,15 +1,13 @@
 -- phpMyAdmin SQL Dump
--- version 4.9.2
+-- version 4.6.6deb5
 -- https://www.phpmyadmin.net/
 --
--- Хост: 127.0.0.1
--- Время создания: Янв 19 2020 г., 13:53
--- Версия сервера: 10.4.11-MariaDB
--- Версия PHP: 7.4.1
+-- Хост: localhost:3306
+-- Время создания: Янв 28 2020 г., 16:13
+-- Версия сервера: 5.7.29-0ubuntu0.18.04.1
+-- Версия PHP: 7.2.24-0ubuntu0.18.04.2
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
-SET AUTOCOMMIT = 0;
-START TRANSACTION;
 SET time_zone = "+00:00";
 
 
@@ -37,7 +35,8 @@ CREATE TABLE `student` (
   `email` varchar(255) NOT NULL,
   `scoreEge` int(3) NOT NULL,
   `dateBirth` date NOT NULL,
-  `citizenship` tinyint(1) NOT NULL
+  `citizenship` tinyint(1) NOT NULL,
+  `accessToken` varchar(255) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
@@ -59,8 +58,6 @@ ALTER TABLE `student`
 --
 ALTER TABLE `student`
   MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
-COMMIT;
-
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;

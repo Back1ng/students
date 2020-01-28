@@ -13,6 +13,7 @@ class Student
     private $scoreEge;
     private $dateBirth;
     private $citizenship;
+    private $token;
 
     public function __construct($data)
     {
@@ -65,7 +66,8 @@ class Student
                 'email' => $this->getEmail(),
                 'scoreEge' => $this->getScoreEge(),
                 'dateBirth' => $this->getDateBirth(),
-                'citizenship' => $this->getCitizenship()
+                'citizenship' => $this->getCitizenship(),
+                'token' => $this->getToken()
             ];
         } catch (\Exception $e) {
             return false;
@@ -110,5 +112,15 @@ class Student
     public function getCitizenship()
     {
         return $this->citizenship;
+    }
+
+    public function setToken($token)
+    {
+        $this->token = $token;
+    }
+
+    public function getToken()
+    {
+        return $this->token;
     }
 }

@@ -35,9 +35,6 @@ if (isset($_GET['fieldSearch'])) {
 } elseif ($route === "/updateStudent") {
     $controller = new RegistrationController();
     $controller->updateStudent();
-} elseif ($route === "/generateFakerData") {
-    $controller = new FakerController();
-    $controller->index();
 } else {
     echo "Данной страницы не существует";
 }

@@ -15,7 +15,13 @@ class RegistrationController
         if (isset($_COOKIE['ID_AUTH_STUDENT'])) {
             try {
                 $studentGateway = new StudentDataGateway();
-                $student = new Student($studentGateway->find((int)$_COOKIE['ID_AUTH_STUDENT'], "student"));
+                if ($studentGateway->validateAccessToken($_COOKIE['TOKEN'] ?: 0, $_COOKIE['ID_AUTH_STUDENT'], "student")) {
+                    $student = new Student($studentGateway->find((int)$_COOKIE['ID_AUTH_STUDENT'], "student"));
+                } else {
+                    setcookie("ID_AUTH_STUDENT", "", time()-3600);
+                    setcookie('STUDENT_NAME', "", time()-3600);
+                    setcookie('STUDENT_SURNAME', "", time()-3600);
+                }
             } catch (Exception $e) {
                 $errorInPostQuery = 1;
                 $_SESSION['ERROR'] = $e->getMessage();
@@ -29,6 +35,7 @@ class RegistrationController
     {
         if (StudentValidator::postHaveNeededKeys()) {
             $student = new Student($_POST);
+            $student->setToken(bin2hex(random_bytes(16)));
             $isRegistration = 1;
             if (isset($_SESSION['ERROR'])) {
                 $errorInPostQuery = 1;
@@ -40,6 +47,7 @@ class RegistrationController
                     setcookie('ID_AUTH_STUDENT', $studentId, time() + 60 * 60 * 24 * 30 * 12 * 10);
                     setcookie('STUDENT_NAME', $student->getName(), time() + 60 * 60 * 24 * 30 * 12 * 10);
                     setcookie('STUDENT_SURNAME', $student->getSurname(), time() + 60 * 60 * 24 * 30 * 12 * 10);
+                    setcookie('TOKEN', $student->getToken(), time() + 60 * 60 * 24 * 30 * 12 * 10);
                     $_SESSION['SUCCESS'] = "Вы успешно зарегистрировались!";
                     header('Location: /');
                 } catch (Exception $e) {
@@ -59,6 +67,7 @@ class RegistrationController
         if (StudentValidator::postHaveNeededKeys()) {
             $student = new Student($_POST);
             $student->setId($_COOKIE['ID_AUTH_STUDENT']);
+            $student->setToken($_COOKIE['TOKEN']);
             $isRegistration = 1;
             if (isset($_SESSION['ERROR'])) {
                 $errorInPostQuery = 1;
