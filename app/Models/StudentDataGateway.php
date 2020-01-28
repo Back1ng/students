@@ -77,4 +77,10 @@ class StudentDataGateway extends DB
         }
         return $pages;
     }
+
+    public function validateAccessToken($token, $id, $table)
+    {
+        $uniqueTokenWithId = self::findByTwoColumnsAsUnique("student", "id", "accessToken", [$id, $token]);
+        return !empty($uniqueTokenWithId);
+    }
 }
