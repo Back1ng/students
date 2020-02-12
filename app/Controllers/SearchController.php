@@ -4,7 +4,6 @@
 namespace app\Controllers;
 
 
-use app\Database\DB;
 use app\Models\StudentDataGateway;
 use app\Models\StudentValidator;
 
