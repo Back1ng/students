@@ -52,9 +52,14 @@ class StudentDataGateway extends DB
         }
     }
 
-    public static function showPaginate($table, $page, $limit = 50)
+    public function showPaginate($table, $page, $limit = 50)
     {
         return self::findLimit($table, $page, $limit);
+    }
+
+    public function searchAllColumns(string $table, string $data)
+    {
+        return self::findInAllColumns($table, $data);
     }
 
     public static function getLinksPaginate($table, $page, $limit = 50)

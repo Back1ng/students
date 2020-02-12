@@ -16,7 +16,8 @@ class MainController
             $_SESSION['ERROR'] = $e->getMessage();
             $listStudents = $students->showPaginate("student", 1, 50);
         }
-        $paginateLinks = StudentDataGateway::getLinksPaginate('student', (int)$_GET['page']);
+        $studentGateway = new StudentDataGateway();
+        $paginateLinks = $studentGateway->getLinksPaginate('student', (int)$_GET['page']);
         require(__DIR__ . '/../Views/layout.php');
     }
 }

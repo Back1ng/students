@@ -5,20 +5,17 @@ namespace app\Controllers;
 
 
 use app\Database\DB;
+use app\Models\StudentDataGateway;
 use app\Models\StudentValidator;
 
-class SearchController extends DB
+class SearchController
 {
-    public function __construct()
-    {
-        self::getInstance();
-    }
-
     public function index()
     {
+        $studentGateway = new StudentDataGateway();
         try {
             if (StudentValidator::validateString(htmlspecialchars($_GET['fieldSearch']), 'Поиск')) {
-                $fetchableResult = self::findInAllColumns("student", $_GET['fieldSearch']);
+                $fetchableResult = $studentGateway->searchAllColumns("student", $_GET['fieldSearch']);
                 if (is_array($fetchableResult)) {
                     foreach ($fetchableResult as $key => $value) {
                         $listStudents[] = $value;
