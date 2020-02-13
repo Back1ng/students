@@ -1,4 +1,6 @@
-<?php namespace app\Controllers;
+<?php
+
+namespace app\Controllers;
 
 use app\Models\StudentDataGateway;
 
