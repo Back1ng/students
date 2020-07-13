@@ -21,20 +21,15 @@ if (isset($_GET['fieldSearch'])) {
     if ($route !== "/") {
         header("Location: /?fieldSearch={$saved}");
     }
-    $controller = new SearchController();
-    $controller->index();
+    (new SearchController())->index();
 } elseif ($route === "/") {
-    $controller = new MainController();
-    $controller->index();
+    (new MainController())->index();
 } elseif ($route === "/regist") {
-    $controller = new RegistrationController();
-    $controller->index();
+    (new RegistrationController())->index();
 } elseif ($route === "/addNewStudent") {
-    $controller = new RegistrationController();
-    $controller->addNewStudent();
+    (new RegistrationController())->addNewStudent();
 } elseif ($route === "/updateStudent") {
-    $controller = new RegistrationController();
-    $controller->updateStudent();
+    (new RegistrationController())->updateStudent();
 } else {
     echo "Данной страницы не существует";
 }
