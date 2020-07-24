@@ -18,8 +18,8 @@ class RegistrationController
                 if ($studentGateway->validateAccessToken($_COOKIE['TOKEN'] ?: 0, $_COOKIE['ID_AUTH_STUDENT'], "student")) {
                     $student = new Student($studentGateway->find((int)$_COOKIE['ID_AUTH_STUDENT'], "student"));
                 } else {
-                    setcookie("ID_AUTH_STUDENT", "", time()-3600);
-                    setcookie('STUDENT_NAME', "", time()-3600);
+                    setcookie('ID_AUTH_STUDENT', "", time()-3600);
+                    setcookie('STUDENT_NAME'   , "", time()-3600);
                     setcookie('STUDENT_SURNAME', "", time()-3600);
                 }
             } catch (Exception $e) {
@@ -44,10 +44,10 @@ class RegistrationController
                 $studentGateway = new StudentDataGateway();
                 try {
                     $studentId = $studentGateway->addNewStudent($student);
-                    setcookie('ID_AUTH_STUDENT', $studentId, time() + 60 * 60 * 24 * 30 * 12 * 10);
-                    setcookie('STUDENT_NAME', $student->getName(), time() + 60 * 60 * 24 * 30 * 12 * 10);
-                    setcookie('STUDENT_SURNAME', $student->getSurname(), time() + 60 * 60 * 24 * 30 * 12 * 10);
-                    setcookie('TOKEN', $student->getToken(), time() + 60 * 60 * 24 * 30 * 12 * 10);
+                    setcookie('ID_AUTH_STUDENT', $studentId,             $this->getCookieTime());
+                    setcookie('STUDENT_NAME',    $student->getName(),    $this->getCookieTime());
+                    setcookie('STUDENT_SURNAME', $student->getSurname(), $this->getCookieTime());
+                    setcookie('TOKEN',           $student->getToken(),   $this->getCookieTime());
                     $_SESSION['SUCCESS'] = "Вы успешно зарегистрировались!";
                     header('Location: /');
                 } catch (Exception $e) {
@@ -66,8 +66,10 @@ class RegistrationController
     {
         if (StudentValidator::postHaveNeededKeys()) {
             $student = new Student($_POST);
-            $student->setId($_COOKIE['ID_AUTH_STUDENT']);
+
+            $student->setId   ($_COOKIE['ID_AUTH_STUDENT']);
             $student->setToken($_COOKIE['TOKEN']);
+
             $isRegistration = 1;
             if (isset($_SESSION['ERROR'])) {
                 $errorInPostQuery = 1;
@@ -76,9 +78,9 @@ class RegistrationController
                 $studentGateway = new StudentDataGateway();
                 try {
                     $studentId = $studentGateway->updateExistStudent($student);
-                    setcookie('ID_AUTH_STUDENT', $student->getId(), time()+60*60*24*30*12*10);
-                    setcookie('STUDENT_NAME', $student->getName(), time()+60*60*24*30*12*10);
-                    setcookie('STUDENT_SURNAME', $student->getSurname(), time()+60*60*24*30*12*10);
+                    setcookie('ID_AUTH_STUDENT', $student->getId(),      $this->getCookieTime());
+                    setcookie('STUDENT_NAME',    $student->getName(),    $this->getCookieTime());
+                    setcookie('STUDENT_SURNAME', $student->getSurname(), $this->getCookieTime());
                     $success = 1;
                     $_SESSION['SUCCESS'] = "Вы успешно обновили свои данные!";
                     header('Location: /');
@@ -92,5 +94,10 @@ class RegistrationController
         } else {
             header("Location: /");
         }
+    }
+
+    private function getCookieTime()
+    {
+        return time() + 60 * 60 * 24 * 30 * 12 * 10;
     }
 }
