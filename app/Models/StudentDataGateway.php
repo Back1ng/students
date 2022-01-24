@@ -15,7 +15,7 @@ class StudentDataGateway extends DB
 
     public function addNewStudent(Student $student, $table = 'student')
     {
-        self::startTransaction();
+        self::beginTransaction();
         $lastId = self::getLastId('student');
         $student->setId($lastId);
         if (self::insertRowFromArray(
@@ -40,14 +40,14 @@ class StudentDataGateway extends DB
 
     public function updateExistStudent(Student $student, $table = 'student')
     {
-        self::startTransaction();
+        self::beginTransaction();
         try {
             self::updateStudent("student", $student->getStudentAsArrayIfValid());
             self::commitTransaction();
         } catch (Exception $e) {
             self::rollbackTransaction();
             throw new Exception(
-                "Произошла непредвиденная ошибка, повторите запрос чуть позже."
+                var_dump($e)
             );
         }
     }

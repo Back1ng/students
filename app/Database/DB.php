@@ -1,6 +1,5 @@
 <?php namespace app\Database;
 
-use Exception;
 use PDO;
 
 class DB
@@ -9,7 +8,7 @@ class DB
 
     private function __construct()
     {
-        self::$_instance = new PDO(
+        self::$_instance = new \PDO(
             DB_DRIVER . ":host=" . DB_HOST . ";dbname=" . DB_NAME
             . ";charset=utf8",
             DB_USERNAME,
@@ -25,7 +24,7 @@ class DB
     {
     }
 
-    private function __wakeup()
+    public function __wakeup()
     {
     }
 
@@ -37,19 +36,43 @@ class DB
         return new self();
     }
 
-    public static function startTransaction()
+    public static function beginTransaction()
     {
-        self::$_instance->beginTransaction();
+        try {
+            self::$_instance->beginTransaction();
+        } catch (\PDOException $e) {
+            throw new \RuntimeException(
+                $e->errorInfo[2],
+                $e->errorInfo[1],
+                $e
+            );
+        }
     }
 
     public static function commitTransaction()
     {
-        self::$_instance->commit();
+        try {
+            self::$_instance->commit();
+        } catch (\PDOException $e) {
+            throw new \RuntimeException(
+                $e->errorInfo[2],
+                $e->errorInfo[1],
+                $e
+            );
+        }
     }
 
     public static function rollbackTransaction()
     {
-        self::$_instance->rollBack();
+        try {
+            self::$_instance->rollBack();
+        } catch (\PDOException $e) {
+            throw new \RuntimeException(
+                $e->errorInfo[2],
+                $e->errorInfo[1],
+                $e
+            );
+        }
     }
 
     public static function findById($table, $id)
@@ -57,15 +80,18 @@ class DB
         $sth = self::$_instance->prepare(
             "SELECT * FROM `{$table}` WHERE `id` = :id"
         );
+
         $sth->bindValue(":id", $id);
-        $sth->execute();
+
+        self::execute($sth);
+
         return $sth->fetch(\PDO::FETCH_ASSOC);
     }
 
     public static function getLastId($table = 'student')
     {
         $sth = self::$_instance->prepare("SELECT MAX(id) FROM `{$table}`");
-        $sth->execute();
+        self::execute($sth);
         $id = $sth->fetch(\PDO::FETCH_ASSOC)["MAX(id)"];
         if (empty($id)) {
             return 1;
@@ -77,7 +103,7 @@ class DB
     {
         $sth = self::$_instance->prepare("SELECT * FROM :table");
         $sth->bindValue(":table", $table);
-        $sth->execute();
+        self::execute($sth);
         return $sth->fetchAll();
     }
 
@@ -87,65 +113,62 @@ class DB
         foreach ($data as $key => $value) {
             $values === "" ? $values .= ":" . $key : $values .= ", :" . $key;
         }
-        self::$_instance->setAttribute(
-            \PDO::ATTR_ERRMODE,
-            \PDO::ERRMODE_EXCEPTION
-        );
         $sth = self::$_instance->prepare(
             "INSERT INTO `{$table}` VALUES ({$values})"
         );
         foreach ($data as $key => $value) {
             $sth->bindValue(':' . $key, $value);
         }
-        $sth->execute();
+        self::execute($sth);
         return self::$_instance->lastInsertId();
     }
 
     public static function updateStudent($table, array $data)
     {
+        $values = "";
+        foreach ($data as $key => $value) {
+            if ($key === 'id') continue;
+            $values === "" ? $values .= $key . "=:" . $key : $values .= ", " . $key . "=:" . $key;
+        }
         $sth = self::$_instance->prepare(
-            "UPDATE `{$table}` SET name=:name, surname=:surname, sex=:sex, groupName=:group, email=:email, scoreEge=:scoreEge, dateBirth=:dateBirth, citizenship=:citizenship, accessToken=:token WHERE id=:id"
+            "UPDATE `{$table}` SET {$values} WHERE id=:id"
         );
-        $stmt = $sth->execute($data);
-        return true;
+        return self::execute($sth, $data);
     }
 
     public static function findLimit($table, $page, $limit = 50)
     {
-        try {
-            $limitFrom = ($page - 1) * $limit;
-            $sth = self::$_instance->prepare("SELECT * FROM `{$table}` LIMIT {$limitFrom}, {$limit}");
-            $sth->execute();
-            return $sth->fetchAll();
-        } catch (Exception $e) {
-            throw new Exception('Произошла непредвиденная ошибка');
-        }
+        $limitFrom = ($page - 1) * $limit;
+        $sth = self::$_instance->prepare("SELECT * FROM `{$table}` LIMIT {$limitFrom}, {$limit}");
+        self::execute($sth);
+        return $sth->fetchAll();
     }
 
     public static function findInAllColumns(string $table, string $data) {
-        try {
-            $sth = self::$_instance->prepare(
-                "SELECT * from `{$table}` where concat(name, surname, groupName, email, scoreEge) like :data"
-            );
-            $sth->bindValue(":data", '%'.$data.'%');
-            $sth->execute();
-            return $sth->fetchAll();
-        } catch (Exception $e) {
-            $_SESSION['ERROR'] = $e->getMessage();
-            return [];
-        }
+        $sth = self::$_instance->prepare(
+            "SELECT * from `{$table}` where concat(name, surname, groupName, email, scoreEge) like :data"
+        );
+        $sth->bindValue(":data", '%'.$data.'%');
+        self::execute($sth);
+        return $sth->fetchAll();
     }
 
     public static function findByTwoColumnsAsUnique(string $table, string $firstColumn, string $secondColumn, array $data)
     {
+        $sth = self::$_instance->prepare("SELECT * FROM {$table} WHERE {$firstColumn} = :first and {$secondColumn} = :second");
+        $sth->bindValue(":first", $data[0]);
+        $sth->bindValue(":second", $data[1]);
+        self::execute($sth);
+        return $sth->fetch();
+    }
+
+    private static function execute(\PDOStatement $sth, $data = null)
+    {
         try {
-            $sth = self::$_instance->prepare("SELECT * FROM {$table} WHERE {$firstColumn} = :first and {$secondColumn} = :second");
-            $sth->bindValue(":first", $data[0]);
-            $sth->bindValue(":second", $data[1]);
-            $sth->execute();
-            return $sth->fetch();
-        } catch (Exception $e) {
-            throw new Exception("Что-то произошло не так");
+            return $sth->execute($data);
+        } catch (\PDOException $e) {
+            $_SESSION['ERROR'] = $e->errorInfo;
+            throw new \Exception($e->getMessage());
         }
     }
 }

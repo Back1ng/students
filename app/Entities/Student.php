@@ -62,12 +62,12 @@ class Student
                 'name' => $this->getName(),
                 'surname' => $this->getSurname(),
                 'sex' => $this->getSex(),
-                'group' => $this->getGroup(),
+                'groupName' => $this->getGroup(),
                 'email' => $this->getEmail(),
                 'scoreEge' => $this->getScoreEge(),
                 'dateBirth' => $this->getDateBirth(),
                 'citizenship' => $this->getCitizenship(),
-                'token' => $this->getToken()
+                'accessToken' => $this->getToken()
             ];
         } catch (\Exception $e) {
             return false;
