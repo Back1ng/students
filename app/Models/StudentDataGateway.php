@@ -18,17 +18,14 @@ class StudentDataGateway extends DB
         self::beginTransaction();
         $lastId = self::getLastId('student');
         $student->setId($lastId);
-        if (self::insertRowFromArray(
-            'student',
-            $student->getStudentAsArrayIfValid()
-        )
-        ) {
+        try {
+            self::insertRowFromArray('student', $student->getStudentAsArrayIfValid());
             self::commitTransaction();
             return $lastId;
-        } else {
+        } catch (\Exception $e) {
             self::rollbackTransaction();
             throw new Exception(
-                "Произошла непредвиденная ошибка, повторите запрос чуть позже."
+                $e->getMessage()
             );
         }
     }
@@ -47,7 +44,7 @@ class StudentDataGateway extends DB
         } catch (Exception $e) {
             self::rollbackTransaction();
             throw new Exception(
-                var_dump($e)
+                $e->getMessage()
             );
         }
     }

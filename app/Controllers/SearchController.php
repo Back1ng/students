@@ -19,8 +19,6 @@ class SearchController
                     foreach ($fetchableResult as $key => $value) {
                         $listStudents[] = $value;
                     }
-                } else {
-                    var_dump($fetchableResult);
                 }
             }
             require(__DIR__ . '/../Views/layout.php');
