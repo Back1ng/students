@@ -6,6 +6,8 @@ namespace app\Controllers;
 
 use app\Models\StudentDataGateway;
 use app\Models\StudentValidator;
+use app\Services\Session\ErrorSessionType;
+use app\Services\Session\SessionManager;
 
 class SearchController
 {
@@ -16,14 +18,14 @@ class SearchController
             if (StudentValidator::validateString(htmlspecialchars($_GET['fieldSearch']), 'Поиск')) {
                 $fetchableResult = $studentGateway->searchAllColumns("student", $_GET['fieldSearch']);
                 if (is_array($fetchableResult)) {
-                    foreach ($fetchableResult as $key => $value) {
-                        $listStudents[] = $value;
+                    foreach ($fetchableResult as $student) {
+                        $listStudents[] = $student;
                     }
                 }
             }
             require(__DIR__ . '/../Views/layout.php');
         } catch (\Exception $e) {
-            $_SESSION['ERROR'] = "Неверный параметр запроса";
+            SessionManager::add(new ErrorSessionType(), "Неверный параметр запроса");
         }
     }
 }

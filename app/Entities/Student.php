@@ -1,6 +1,8 @@
 <?php namespace app\Entities;
 
 use app\Models\StudentValidator;
+use app\Services\Session\ErrorSessionType;
+use app\Services\Session\SessionManager;
 
 class Student
 {
@@ -17,7 +19,7 @@ class Student
 
     public function __construct($data)
     {
-        if ($_POST === $data and StudentValidator::postHaveNeededKeys()) {
+        if ($_POST === $data and StudentValidator::arrayHaveNeededKeys($data)) {
             $this->name = $data['fieldName'];
             $this->surname = $data['fieldSurname'];
             $this->sex = $data['fieldSex'];
@@ -28,10 +30,9 @@ class Student
             $this->citizenship = $data['fieldCitizenship'];
             $result = StudentValidator::validateStudent($this);
             if ($result !== null) {
-                $_SESSION['ERROR'] = $result;
+                SessionManager::add(new ErrorSessionType(), $result);
             }
         } else {
-            $this->id = $data['id'];
             $this->name = $data['name'];
             $this->surname = $data['surname'];
             $this->sex = $data['sex'];
@@ -40,20 +41,24 @@ class Student
             $this->scoreEge = $data['scoreEge'];
             $this->dateBirth = $data['dateBirth'];
             $this->citizenship = $data['citizenship'];
+            $this->token = $data['accessToken'];
         }
     }
 
+    /**
+     * @return mixed
+     */
     public function getId()
     {
         return $this->id;
     }
 
-    public function setId($id)
+    public function setId(int $id)
     {
         $this->id = $id;
     }
 
-    public function getStudentAsArrayIfValid()
+    public function getStudentAsArray(): bool|array
     {
         try {
             StudentValidator::validateStudent($this);
@@ -114,7 +119,7 @@ class Student
         return $this->citizenship;
     }
 
-    public function setToken($token)
+    public function setToken(string $token)
     {
         $this->token = $token;
     }

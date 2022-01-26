@@ -5,7 +5,7 @@ use Exception;
 
 class StudentValidator
 {
-    public static function validateString(string $string, $field)
+    public static function validateString(string $string, string $field)
     {
         $lengthString = mb_strlen($string);
         if ($lengthString === 0) {
@@ -22,7 +22,7 @@ class StudentValidator
         return true;
     }
 
-    public static function validateBoolean(int $bool, $field)
+    public static function validateBoolean(int $bool, string $field)
     {
         if ($bool != 0 and $bool != 1) {
             throw new Exception("Неверное логическое значение");
@@ -30,7 +30,7 @@ class StudentValidator
         return true;
     }
 
-    public static function validateGroup($group, $field)
+    public static function validateGroup($group, string $field)
     {
         $lengthGroup = mb_strlen($group);
         if ($lengthGroup >= 2 and $lengthGroup <= 5) {
@@ -40,7 +40,7 @@ class StudentValidator
         }
     }
 
-    public static function validateEmail($email, $field)
+    public static function validateEmail($email, string $field)
     {
         if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
             return true;
@@ -65,7 +65,7 @@ class StudentValidator
         return true;
     }
 
-    public static function validateDateBirth($dateBirth, $field)
+    public static function validateDateBirth($dateBirth, string $field)
     {
         $explodedDate = explode("-", $dateBirth);
 
@@ -84,26 +84,15 @@ class StudentValidator
         }
     }
 
-    public static function postHaveNeededKeys()
+    public static function arrayHaveNeededKeys(array $data): bool
     {
-        if (array_key_exists('fieldName', $_POST) and array_key_exists(
-                'fieldSurname',
-                $_POST
-            ) and array_key_exists('fieldSex', $_POST) and array_key_exists(
-                'fieldCitizenship',
-                $_POST
-            ) and array_key_exists('fieldGroup', $_POST) and array_key_exists(
-                'fieldScoreEge',
-                $_POST
-            ) and array_key_exists('fieldEmail', $_POST) and array_key_exists(
-                'fieldDateBirth',
-                $_POST
-            )
-        ) {
-            return true;
-        } else {
-            return false;
+        $keys = ['fieldName', 'fieldSurname', 'fieldSex', 'fieldCitizenship', 'fieldGroup', 'fieldScoreEge', 'fieldEmail', 'fieldDateBirth'];
+        foreach ($keys as $key) {
+            if (false === array_key_exists($key, $data)) {
+                return false;
+            }
         }
+        return true;
     }
 
     public static function validateStudent(Student $student)

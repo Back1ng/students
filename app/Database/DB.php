@@ -1,22 +1,25 @@
-<?php namespace app\Database;
+<?php
 
+namespace app\Database;
+
+use app\Services\Session\ErrorSessionType;
+use app\Services\Session\SessionManager;
 use PDO;
 
 class DB
 {
-    private static $_instance = null;
+    private static ?PDO $_instance = null;
 
     private function __construct()
     {
         self::$_instance = new \PDO(
-            DB_DRIVER . ":host=" . DB_HOST . ";dbname=" . DB_NAME
-            . ";charset=utf8",
+            DB_DRIVER . ":host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=utf8",
             DB_USERNAME,
             DB_PASSWORD
         );
         self::$_instance->setAttribute(
-            PDO::ATTR_ERRMODE,
-            PDO::ERRMODE_EXCEPTION
+            \PDO::ATTR_ERRMODE,
+            \PDO::ERRMODE_EXCEPTION
         );
     }
 
@@ -24,58 +27,67 @@ class DB
     {
     }
 
-    public function __wakeup()
-    {
-    }
-
-    public static function getInstance()
+    /**
+     * @return PDO|DB|null
+     */
+    public static function getInstance(): PDO|DB|null
     {
         if (self::$_instance !== null) {
             return self::$_instance;
         }
+
         return new self();
     }
 
-    public static function beginTransaction()
+    /**
+     * @return void
+     * @throws \Exception
+     */
+    public static function beginTransaction(): void
     {
         try {
             self::$_instance->beginTransaction();
         } catch (\PDOException $e) {
-            throw new \RuntimeException(
-                $e->errorInfo[2],
-                $e->errorInfo[1],
-                $e
-            );
+            throw new \Exception($e->getMessage());
         }
     }
 
-    public static function commitTransaction()
+    /**
+     * @return void
+     * @throws \Exception
+     */
+    public static function commitTransaction(): void
     {
         try {
             self::$_instance->commit();
         } catch (\PDOException $e) {
-            throw new \RuntimeException(
-                $e->errorInfo[2],
-                $e->errorInfo[1],
-                $e
-            );
+            throw new \Exception($e->getMessage());
         }
     }
 
-    public static function rollbackTransaction()
+    /**
+     * @return void
+     *
+     * @throws \Exception
+     */
+    public static function rollbackTransaction(): void
     {
         try {
             self::$_instance->rollBack();
         } catch (\PDOException $e) {
-            throw new \RuntimeException(
-                $e->errorInfo[2],
-                $e->errorInfo[1],
-                $e
-            );
+            throw new \Exception($e->getMessage());
         }
     }
 
-    public static function findById($table, $id)
+    /**
+     * @param string $table
+     * @param int $id
+     *
+     * @return mixed in this case, return associative array or false
+     *
+     * @throws \Exception
+     */
+    public static function findById(string $table, int $id): mixed
     {
         $sth = self::$_instance->prepare(
             "SELECT * FROM `{$table}` WHERE `id` = :id"
@@ -88,7 +100,12 @@ class DB
         return $sth->fetch(\PDO::FETCH_ASSOC);
     }
 
-    public static function getLastId($table = 'student')
+    /**
+     * @param string $table
+     * @return int
+     * @throws \Exception
+     */
+    public static function getLastId(string $table = 'student'): int
     {
         $sth = self::$_instance->prepare("SELECT MAX(id) FROM `{$table}`");
         self::execute($sth);
@@ -99,7 +116,10 @@ class DB
         return $id + 1;
     }
 
-    public static function getAllRows($table)
+    /**
+     * @throws \Exception
+     */
+    public static function getAllRows($table): bool|array
     {
         $sth = self::$_instance->prepare("SELECT * FROM :table");
         $sth->bindValue(":table", $table);
@@ -107,7 +127,10 @@ class DB
         return $sth->fetchAll();
     }
 
-    public static function insertRowFromArray($table, array $data)
+    /**
+     * @throws \Exception
+     */
+    public static function insertRowFromArray($table, array $data): bool|string
     {
         $values = "";
         foreach ($data as $key => $value) {
@@ -123,7 +146,15 @@ class DB
         return self::$_instance->lastInsertId();
     }
 
-    public static function updateStudent($table, array $data)
+    /**
+     * @param string $table
+     * @param array $data associative array with values to update table
+     *
+     * @return bool
+     *
+     * @throws \Exception
+     */
+    public static function update(string $table, array $data): bool
     {
         $values = "";
         foreach ($data as $key => $value) {
@@ -136,7 +167,16 @@ class DB
         return self::execute($sth, $data);
     }
 
-    public static function findLimit($table, $page, $limit = 50)
+    /**
+     * @param string $table
+     * @param int $page
+     * @param int $limit
+     *
+     * @return bool|array return false on empty results
+     *
+     * @throws \Exception
+     */
+    public static function findLimit(string $table, int $page, int $limit = 50): bool|array
     {
         $limitFrom = ($page - 1) * $limit;
         $sth = self::$_instance->prepare("SELECT * FROM `{$table}` LIMIT {$limitFrom}, {$limit}");
@@ -144,7 +184,16 @@ class DB
         return $sth->fetchAll();
     }
 
-    public static function findInAllColumns(string $table, string $data) {
+    /**
+     * @param string $table
+     * @param string $data
+     *
+     * @return bool|array
+     *
+     * @throws \Exception
+     */
+    public static function findInAllColumns(string $table, string $data): bool|array
+    {
         $sth = self::$_instance->prepare(
             "SELECT * from `{$table}` where concat(name, surname, groupName, email, scoreEge) like :data"
         );
@@ -153,21 +202,43 @@ class DB
         return $sth->fetchAll();
     }
 
-    public static function findByTwoColumnsAsUnique(string $table, string $firstColumn, string $secondColumn, array $data)
+    /**
+     * @param string $table
+     * @param string $firstColumn
+     * @param string $secondColumn
+     * @param array $data
+     *
+     * @return mixed
+     *
+     * @throws \Exception
+     */
+    public static function findByTwoColumnsAsUnique(
+        string $table, string $firstColumn, string $secondColumn, array $data
+    ): mixed
     {
-        $sth = self::$_instance->prepare("SELECT * FROM {$table} WHERE {$firstColumn} = :first and {$secondColumn} = :second");
+        $sth = self::$_instance->prepare(
+            "SELECT * FROM {$table} WHERE {$firstColumn} = :first and {$secondColumn} = :second"
+        );
         $sth->bindValue(":first", $data[0]);
         $sth->bindValue(":second", $data[1]);
         self::execute($sth);
         return $sth->fetch();
     }
 
-    private static function execute(\PDOStatement $sth, $data = null)
+    /**
+     * @param \PDOStatement $sth
+     * @param array|null $data
+     *
+     * @return bool
+     *
+     * @throws \Exception
+     */
+    private static function execute(\PDOStatement $sth, array $data = null): bool
     {
         try {
             return $sth->execute($data);
         } catch (\PDOException $e) {
-            $_SESSION['ERROR'] = $e->errorInfo;
+            SessionManager::add(new ErrorSessionType(), $e->getMessage());
             throw new \Exception($e->getMessage());
         }
     }

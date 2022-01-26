@@ -2,10 +2,13 @@
 
 namespace app\Controllers;
 
-use app\Database\DB;
 use app\Entities\Student;
 use app\Models\StudentDataGateway;
 use app\Models\StudentValidator;
+use app\Services\Cookie\CookieManager;
+use app\Services\Session\ErrorSessionType;
+use app\Services\Session\SessionManager;
+use app\Services\Session\SuccessSessionType;
 use Exception;
 
 class RegistrationController
@@ -18,13 +21,12 @@ class RegistrationController
                 if ($studentGateway->validateAccessToken($_COOKIE['TOKEN'] ?: 0, $_COOKIE['ID_AUTH_STUDENT'], "student")) {
                     $student = new Student($studentGateway->find((int)$_COOKIE['ID_AUTH_STUDENT'], "student"));
                 } else {
-                    setcookie('ID_AUTH_STUDENT', "", time()-3600);
-                    setcookie('STUDENT_NAME'   , "", time()-3600);
-                    setcookie('STUDENT_SURNAME', "", time()-3600);
+                    $cookieManager = new CookieManager();
+                    $cookieManager->set('add', ["", "", ""], $this->getCookieTime());
                 }
             } catch (Exception $e) {
                 $errorInPostQuery = 1;
-                $_SESSION['ERROR'] = $e->getMessage();
+                SessionManager::add(new ErrorSessionType(), $e->getMessage());
             }
         }
         $isRegistration = 1;
@@ -33,26 +35,35 @@ class RegistrationController
 
     public function addNewStudent()
     {
-        if (StudentValidator::postHaveNeededKeys()) {
+        if (StudentValidator::arrayHaveNeededKeys($_POST)) {
             $student = new Student($_POST);
-            $student->setToken(bin2hex(random_bytes(16)));
+            $student->setToken($this->getRandomString());
             $isRegistration = 1;
-            if (isset($_SESSION['ERROR'])) {
+            if (SessionManager::exist(new ErrorSessionType())) {
                 $errorInPostQuery = 1;
                 header("Location: /regist");
             } else {
                 $studentGateway = new StudentDataGateway();
                 try {
-                    $studentId = $studentGateway->addNewStudent($student);
-                    setcookie('ID_AUTH_STUDENT', $studentId,             $this->getCookieTime());
-                    setcookie('STUDENT_NAME',    $student->getName(),    $this->getCookieTime());
-                    setcookie('STUDENT_SURNAME', $student->getSurname(), $this->getCookieTime());
-                    setcookie('TOKEN',           $student->getToken(),   $this->getCookieTime());
-                    $_SESSION['SUCCESS'] = "Вы успешно зарегистрировались!";
+                    $studentId = $studentGateway->add($student);
+
+                    $cookieManager = new CookieManager();
+                    $cookieManager->set(
+                        'add',
+                        [
+                            $studentId,
+                            $student->getName(),
+                            $student->getSurname(),
+                            $student->getToken(),
+                        ],
+                        $this->getCookieTime()
+                    );
+
+                    SessionManager::add(new SuccessSessionType(), "Вы успешно зарегистрировались!");
                     header('Location: /');
                 } catch (Exception $e) {
                     $errorInPostQuery = 1;
-                    $_SESSION['ERROR'] = $e->getMessage();
+                    SessionManager::add(new ErrorSessionType(), $e->getMessage());
                     header("Location: ".$_SERVER['HTTP_REFERER']);
                 }
             }
@@ -64,29 +75,39 @@ class RegistrationController
 
     public function updateStudent()
     {
-        if (StudentValidator::postHaveNeededKeys()) {
+        $cookieManager = new CookieManager();
+
+        if (StudentValidator::arrayHaveNeededKeys($_POST)) {
             $student = new Student($_POST);
 
-            $student->setId   ($_COOKIE['ID_AUTH_STUDENT']);
-            $student->setToken($_COOKIE['TOKEN']);
+            $student->setId   ($cookieManager->get('ID_AUTH_STUDENT'));
+            $student->setToken($cookieManager->get('TOKEN'));
 
             $isRegistration = 1;
-            if (isset($_SESSION['ERROR'])) {
+            if (SessionManager::exist(new ErrorSessionType())) {
                 $errorInPostQuery = 1;
                 header("Location: /regist");
             } else {
                 $studentGateway = new StudentDataGateway();
                 try {
                     $studentId = $studentGateway->updateExistStudent($student);
-                    setcookie('ID_AUTH_STUDENT', $student->getId(),      $this->getCookieTime());
-                    setcookie('STUDENT_NAME',    $student->getName(),    $this->getCookieTime());
-                    setcookie('STUDENT_SURNAME', $student->getSurname(), $this->getCookieTime());
+
+                    $cookieManager->set(
+                        'default',
+                        [
+                            $student->getId(),
+                            $student->getName(),
+                            $student->getSurname()
+                        ],
+                        $this->getCookieTime()
+                    );
+
                     $success = 1;
-                    $_SESSION['SUCCESS'] = "Вы успешно обновили свои данные!";
+                    SessionManager::add(new SuccessSessionType(), "Вы успешно обновили свои данные!");
                     header('Location: /');
                 } catch (Exception $e) {
                     $errorInPostQuery = 1;
-                    $_SESSION['ERROR'] = $e->getMessage();
+                    SessionManager::add(new ErrorSessionType(), $e->getMessage());
                     header("Location: ".$_SERVER['HTTP_REFERER']);
                 }
             }
@@ -99,5 +120,14 @@ class RegistrationController
     private function getCookieTime()
     {
         return time() + 60 * 60 * 24 * 30 * 12 * 10;
+    }
+
+    /**
+     * @return string
+     * @throws Exception
+     */
+    private function getRandomString(): string
+    {
+        return bin2hex(random_bytes(16));
     }
 }

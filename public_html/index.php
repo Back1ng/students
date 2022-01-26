@@ -30,6 +30,8 @@ if (isset($_GET['fieldSearch'])) {
     (new RegistrationController())->addNewStudent();
 } elseif ($route === "/updateStudent") {
     (new RegistrationController())->updateStudent();
+} elseif ($route === "/fake") {
+    (new FakerController())->index();
 } else {
     echo "Данной страницы не существует";
 }

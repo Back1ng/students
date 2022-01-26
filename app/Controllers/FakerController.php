@@ -32,8 +32,9 @@ class FakerController extends DB
             $data['scoreEge'] = $faker->numberBetween(0, 300);
             $data['dateBirth'] = $faker->date();
             $data['citizenship'] = $faker->numberBetween(0, 1);
+            $data['accessToken'] = '123c128c321c3m218c3921';
             $student = new Student($data);
-            $studentGateway->addNewStudent($student);
+            $studentGateway->add($student);
         }
     }
 }
