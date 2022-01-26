@@ -14,7 +14,7 @@ class CookieManager
      *
      * @param string $preset Available presets:
      * `default` - ID_AUTH_STUDENT, STUDENT_NAME, STUDENT_SURNAME
-     * `update`  - TOKEN
+     * `add`  - TOKEN
      *
      * @param array $cookieNames Must be in order, like in preset
      *

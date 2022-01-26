@@ -22,7 +22,7 @@ class RegistrationController
                     $student = new Student($studentGateway->find((int)$_COOKIE['ID_AUTH_STUDENT'], "student"));
                 } else {
                     $cookieManager = new CookieManager();
-                    $cookieManager->set('add', ["", "", ""], $this->getCookieTime());
+                    $cookieManager->set('add', ["", "", "", ""], $this->getCookieTime());
                 }
             } catch (Exception $e) {
                 $errorInPostQuery = 1;
